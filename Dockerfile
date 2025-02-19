@@ -1,9 +1,21 @@
-FROM alpine:3.9
+FROM golang:1.23 AS builder
+ARG TARGETOS
+ARG TARGETARCH
 
-EXPOSE 9502
+WORKDIR /workspace
+COPY go.mod go.mod
+COPY go.sum go.sum
 
-RUN apk add --no-cache ca-certificates
+RUN go mod download
 
-COPY qrator-exporter ./
+COPY cmd/*.go cmd/
+COPY internal internal
 
-ENTRYPOINT ["./qrator-exporter"]
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -ldflags '-s -w' -o qrator-exporter cmd/*.go
+
+FROM gcr.io/distroless/static:nonroot
+WORKDIR /
+COPY --from=builder /workspace/qrator-exporter .
+USER 65532:65532
+
+ENTRYPOINT ["/qrator-exporter"]

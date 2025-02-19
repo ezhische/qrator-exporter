@@ -1,3 +1,5 @@
 vendor/
 dist/
 coverage.out
+.env
+test.sh
