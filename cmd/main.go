@@ -3,12 +3,11 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"os"
 
+	"github.com/ezhische/qrator-exporter/internal/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-
-	"github.com/prometheus/common/log"
+	"github.com/sirupsen/logrus"
 )
 
 func healthz(response http.ResponseWriter, request *http.Request) {
@@ -16,11 +15,17 @@ func healthz(response http.ResponseWriter, request *http.Request) {
 }
 
 func main() {
-	c, err := NewCollector("https://api.qrator.net/request", os.Getenv("QRATOR_CLIENT_ID"), os.Getenv("QRATOR_X_QRATOR_AUTH"))
+	log := logrus.New()
+
+	conf, err := config.ConfigFromEnv()
+	if err != nil {
+		log.Fatalf("Can't create config: %v", err)
+	}
+	coll, err := config.CollectorFromConfig(conf, log)
 	if err != nil {
 		log.Fatalf("Can't create collector: %v", err)
 	}
-	prometheus.MustRegister(c)
+	prometheus.MustRegister(coll)
 	http.Handle("/metrics", promhttp.Handler())
 	http.HandleFunc("/healthz", healthz)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -33,5 +38,5 @@ func main() {
 			</html>`))
 	})
 	log.Infoln("Starting qrator-exporter")
-	log.Fatal(http.ListenAndServe(":9502", nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", conf.Port), nil))
 }
