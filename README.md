@@ -1,5 +1,5 @@
 # Qrator exporter
-Inspired by https://github.com/StupidScience/qrator-exporter(https://github.com/StupidScience/qrator-exporter)
+Inspired by https://github.com/StupidScience/qrator-exporter
 
 Tottaly rewrited for new API
 
