@@ -76,4 +76,3 @@ jobs:
           context: .
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/myapp:${{ steps.tag.outputs.tag }}
-          platforms: linux/amd64, linux/arm64
