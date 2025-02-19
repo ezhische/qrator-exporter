@@ -11,7 +11,7 @@ RUN go mod download
 COPY cmd/*.go cmd/
 COPY internal internal
 
-RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o qrator-exporter cmd/*.go
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -ldflags '-s -w' -o qrator-exporter cmd/*.go
 
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
