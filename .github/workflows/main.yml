@@ -46,9 +46,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+          merge-multiple: true
           
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: artifacts/*
         env:
@@ -75,4 +76,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/myapp:${{ steps.tag.outputs.tag }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/qrator-exporter:${{ steps.tag.outputs.tag }}

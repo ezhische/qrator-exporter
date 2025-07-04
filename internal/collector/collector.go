@@ -14,6 +14,7 @@ import (
 
 const (
 	namespace = "qrator"
+	gCount    = 10 //Количество горутин для сбора метрик
 )
 
 type Collector struct {
@@ -48,6 +49,19 @@ type config struct {
 	proxyURL     string
 	timeout      time.Duration
 	logger       *logrus.Logger
+	con          int
+}
+
+type Semaphore struct {
+	C chan struct{}
+}
+
+func (s *Semaphore) Acquire() {
+	s.C <- struct{}{}
+}
+
+func (s *Semaphore) Release() {
+	<-s.C
 }
 
 func CollectorFromConfig(
@@ -58,6 +72,7 @@ func CollectorFromConfig(
 	proxy string,
 	timeout time.Duration,
 	logger *logrus.Logger,
+	con int,
 ) (*Collector, error) {
 	conf := &config{
 		aPIKey:       apiKey,
@@ -67,6 +82,7 @@ func CollectorFromConfig(
 		timeout:      timeout,
 		proxyURL:     proxy,
 		logger:       logger,
+		con:          con,
 	}
 	return NewCollector(conf)
 }
@@ -270,11 +286,16 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 		c.config.logger.Errorf("error getting domains:%s", err)
 	}
 
+	sem := Semaphore{
+		C: make(chan struct{}, c.config.con),
+	}
 	wg := &sync.WaitGroup{}
 	for _, qd := range qds {
 		//IPStat API
 		wg.Add(1)
 		go func(qd entity.QratorDomain, ch chan<- prometheus.Metric, wg *sync.WaitGroup) {
+			sem.Acquire()
+			defer sem.Release()
 			defer wg.Done()
 
 			iPStat, err := c.getQratorDomainIPStats(qd)
@@ -310,6 +331,8 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 		//HTTP Stat API
 		wg.Add(1)
 		go func(qd entity.QratorDomain, ch chan<- prometheus.Metric, wg *sync.WaitGroup) {
+			sem.Acquire()
+			defer sem.Release()
 			defer wg.Done()
 
 			httpStat, err := c.getQratorDomainHTTPStats(qd)
@@ -357,6 +380,8 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 		// Billable API
 		wg.Add(1)
 		go func(qd entity.QratorDomain, ch chan<- prometheus.Metric, wg *sync.WaitGroup) {
+			sem.Acquire()
+			defer sem.Release()
 			defer wg.Done()
 
 			billStat, err := c.getQratorDomainBillableStats(qd)

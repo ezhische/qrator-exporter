@@ -16,6 +16,7 @@ Exporter configurates via environment variables:
 |QRATOR_API_URL|API URL (default https://api.qrator.net/request)|false|
 |QRATOR_TIMEOUT|API Call timeous (default 5s)|false|
 |QRATOR_EXPORTER_PORT|Metrics port (default 9502)|false|
+|QRATOR_EXPORTER_CONCURENT|Number of parralel connections to API (default 10)|false|
 
 Exporter listen on tcp-port **9502**. Metrics available on `/metrics` path.
 
